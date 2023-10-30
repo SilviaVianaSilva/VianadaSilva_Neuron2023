@@ -64,30 +64,6 @@ for i = 1: numel(peaks_l)
     end 
 end
 
-%% Problem with this method of merging peaks, instead merge peaks if they overlap, as below
-%% Merge peaks if they overlap somehow
-
-    %{
-    e_in_area = end_pf_l(i) <=(end_pf_l(1:i-1)+10) & end_pf_l(i) >= (begin_pf_l(1:i-1)-10); %10 is stepsize, need to account fo
-    b_in_area = (begin_pf_l(i) <= end_pf_l(1:i-1)+10) & (begin_pf_l(i) >= begin_pf_l(1:i-1)-10); %10 is stepsize, need to account fo
-    if sum(b_in_area)>0   % if any of the previous PFs covers this peak, then remove
-        %disp('Merging neighboring PFs');
-        for qq = find(b_in_area) %find(e_in_area) is the peak it gets merged into
-            remove_peak(i) = 1; %remove this peak and add it to the larger one
-            %merge PF by resetting begin to the smaller and end to the
-            %larger
-            begin_pf_l(qq) = min(begin_pf_l(qq), begin_pf_l(i));
-            end_pf_l(qq) =  max(end_pf_l(qq), end_pf_l(i));
-        end
-    end
-    if sum(e_in_area)>0
-        for qq = find(e_in_area) %find(e_in_area) is the peak it gets merged into
-            remove_peak(i) = 1;
-            begin_pf_l(qq) = min(begin_pf_l(qq), begin_pf_l(i));
-            end_pf_l(qq) =  max(end_pf_l(qq), end_pf_l(i));
-        end
-    end
-%}
 else
     [peaks_l, ploc_l, begin_pf_l, end_pf_l, pf_size_l] =   deal(NaN, NaN, NaN, NaN,NaN);
 end
@@ -183,45 +159,9 @@ end
 
 end % end if-statement requiring PF in STEM of both sides   
 end % end if-statement requiring PF in both sides
-%{
-% splitter_PFs definition is not stringent enough, too many cells have
-% non-overlapping PFs in the stem that might not be
-splitter_PFs = sum(matching_pf_rl==0) + sum(matching_pf_lr==0); %check which PF left or right don't have a PF in the other turn
-% splitter as defined as a cell with a PF that is only active in specific
-% side turn not in the other side
-if splitter_PFs == 0, splitter_side = 0,
-elseif sum(matching_pf_rl==0) > sum(matching_pf_lr==0), splitter_side = 2  %right splitter cell
-elseif sum(matching_pf_rl==0) <= sum(matching_pf_lr==0), splitter_side = 1 %left splitter cell
-end
 
-elseif (sum(l_mem)==0)&(sum(r_mem)>=1) 
-   %PFs in right turn only
-   splitter_PFs = sum(r_mem);
-   splitter_side = 2;
-elseif (sum(l_mem)>=1)&(sum(r_mem)==0)
-   %PFs in left turn only 
-   splitter_PFs = sum(l_mem);
-   splitter_side = 1;
-
-%% splitter cells
-if splitter_PFs~=0, splitter_cell = 1; else, splitter_cell = 0; end 
-%}
 %% Total tumber of peaks
 pf_num_peaks = sum(peaks_l>0) + sum(peaks_r>0);   % count number of peaks, except the 0 from the empty
-
-
-%{
-%% sanity check for calculation of place field size
-subplot(size(avg_rate_matrix_left,1),1,ccc)
-if pf_num_peaks(pf_cell_numb,1) > 0
-plot(upscale_rate_matrix), hold on
-else  % if no PF are found on either side plot both sides firing rate
-    plot(imresize(avg_rate_matrix_left(ccc,:), [1, 100* size(avg_rate_matrix_left,2)]),'b--'),hold on
-    plot(imresize(avg_rate_matrix_right(ccc,:), [1, 100* size(avg_rate_matrix_right,2)]),'k'),hold on
-end
-plot(pf_marker1(pf_cell_numb,1),0.2*pf_height(pf_cell_numb,1),'ro','MarkerSize',12)
-plot(pf_marker2(pf_cell_numb,1),0.2*pf_height(pf_cell_numb,1),'go','MarkerSize',12)        
-%}
 
 if draw_figures == 1
 
@@ -246,16 +186,6 @@ else
 end
 
 end
-%{
-plot(cell_rate_matrix_left_in,'c--'),hold on
-plot(cell_rate_matrix_right_in,'m:'),hold on
-plot(ploc_r/100,peaks_r,'k*','MarkerSize',12)
-plot(begin_pf_r/100,0.2*peaks_r,'ro','MarkerSize',12)
-plot(end_pf_r/100,0.2*peaks_r,'ro','MarkerSize',12)        
-plot(ploc_l/100,peaks_l,'k*','MarkerSize',12)
-plot(begin_pf_l/100,0.2*peaks_l,'go','MarkerSize',12)
-plot(end_pf_l/100,0.2*peaks_l,'go','MarkerSize',12)    
-%}
 
 
 if sum(peaks_l>0) == 0
@@ -280,7 +210,6 @@ end
                 overl_peaks = ismember([d_beg_pf(i):d_end_pf(i)], [d_beg_pf(pp):d_end_pf(pp)]); %so many bins are overlapping
                 if sum(overl_peaks)>0.25*size([d_beg_pf(pp):d_end_pf(pp)],2)  % check how much percent of the peaks are overlapping, if >25% of the peak (halfwidth) in left trials is also in right trials , consider the same place field
                     remove_peak(pp) = 1;
-                    %replace the more accurate values now
                     begin_pf(i) = min(begin_pf(pp), begin_pf(i));
                     end_pf(i) = max(end_pf(pp), end_pf(i));
                 else
@@ -291,25 +220,10 @@ end
     end
 
 end
-    %clear peaks that are lower (since sorted by height), if they are
-    %within a already calculated PF (no need to calculate PF again) 
-    % first metho for PFs removing duplicates 
-    %{
-    if i>1
-        if sum((end_pf_l(1:i-1) > ploc_l(i)) & (ploc_l(i)> begin_pf_l(1:i-1)))>0   % if any of the previous PFs covers this peak, then remove
-        remove_peak(i) = 1;
-        %disp('Removing duplicate PF');        
-        continue %don't bother to calculate actual PF begin and end
-        end        
-    end    
-   
-    %}
     
        function [average_corr] = do_correlate(rate_matrix_a, rate_matrix_b, areacode)
         [cells_a, pixels_a, trials_a] = size(rate_matrix_a);
         [cells_b, pixels_b, trials_b] = size(rate_matrix_b);
-        %this can be done quicker  newrates = rate_matrix(:,areacode,:),
-        %but errors if rate matrix is empty, would need to account for
         for cc = 1:cells_a
             for tt = 1:trials_a
                 RM_a(cc,:,tt) = rate_matrix_a(cc,areacode,tt); %to take out the delay site (is 66 bins long)
@@ -331,9 +245,7 @@ end
                     if ta == tb
                         corr_matrix(ta,tb) = nan; %to put the diagonal in blue
                     else
-                        corr_matrix(ta,tb)= nancorr(RM_a',RM_b'); %sees if rate of change is similar in trials. if rate changes the same = 1.
-                        %checkmax = nanmax([newrates(x,:,i) newrates(x,:,ii)]);
-                        %if checkmax <= 0.25  matrix(i,ii) = NaN; end
+                        corr_matrix(ta,tb)= nancorr(RM_a',RM_b'); 
                     end
                 end
             end
