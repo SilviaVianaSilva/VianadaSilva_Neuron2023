@@ -9,7 +9,7 @@ https://www.cell.com/neuron/fulltext/S0896-6273(23)00757-2
 
 # References
 
-If you use code for your research please cite:
+If you use this code for your research please cite:
 
 ```
 @article{,
