@@ -24,12 +24,3 @@ fprintf('Loading %s\n', fullfile(paths,'processedData','indataB.mat'));
 load(fullfile(paths,'processedData','indataB.mat'));
 disp('Done');
 pathData = indata;
-%{
-nPaths = length(indata);
-for p = 1:nPaths
-    pathData(p).x = indata(p).x;
-    pathData(p).y = indata(p).y;
-    %[pathData(p).x, pathData(p).y] = rotatePath(pathData(p).x,pathData(p).y,deg2rad(adj.rotation));
-end
-%}
-%pathData = addVelocityToIndata(pathData);
